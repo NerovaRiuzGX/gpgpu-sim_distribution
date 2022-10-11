@@ -671,40 +671,57 @@ enum cache_request_status cache_stats::select_stats_status(
 
 unsigned long long &cache_stats::operator()(int access_type, int access_outcome,
                                             bool fail_outcome) {
+  /// 20221011: modified lines for speeding up execution.
+  
   ///
   /// Simple method to read/modify the stat corresponding to (access_type,
   /// access_outcome) Used overloaded () to avoid the need for separate
   /// read/write member functions
   ///
-  if (fail_outcome) {
-    if (!check_fail_valid(access_type, access_outcome))
-      assert(0 && "Unknown cache access type or fail outcome");
+  // if (fail_outcome) {
+  //   if (!check_fail_valid(access_type, access_outcome))
+  //     assert(0 && "Unknown cache access type or fail outcome");
 
+  //   return m_fail_stats[access_type][access_outcome];
+  // } else {
+  //   if (!check_valid(access_type, access_outcome))
+  //     assert(0 && "Unknown cache access type or access outcome");
+
+  //   return m_stats[access_type][access_outcome];
+  // }
+
+  if (fail_outcome) {
     return m_fail_stats[access_type][access_outcome];
   } else {
-    if (!check_valid(access_type, access_outcome))
-      assert(0 && "Unknown cache access type or access outcome");
-
     return m_stats[access_type][access_outcome];
   }
 }
 
 unsigned long long cache_stats::operator()(int access_type, int access_outcome,
                                            bool fail_outcome) const {
+  /// 20221011: modified lines for speeding up execution.
+  
   ///
   /// Const accessor into m_stats.
   ///
-  if (fail_outcome) {
-    if (!check_fail_valid(access_type, access_outcome))
-      assert(0 && "Unknown cache access type or fail outcome");
+  // if (fail_outcome) {
+  //   if (!check_fail_valid(access_type, access_outcome))
+  //     assert(0 && "Unknown cache access type or fail outcome");
 
+  //   return m_fail_stats[access_type][access_outcome];
+  // } else {
+  //   if (!check_valid(access_type, access_outcome))
+  //     assert(0 && "Unknown cache access type or access outcome");
+
+  //   return m_stats[access_type][access_outcome];
+  // }
+
+  if (fail_outcome) {
     return m_fail_stats[access_type][access_outcome];
   } else {
-    if (!check_valid(access_type, access_outcome))
-      assert(0 && "Unknown cache access type or access outcome");
-
     return m_stats[access_type][access_outcome];
   }
+
 }
 
 cache_stats cache_stats::operator+(const cache_stats &cs) {
