@@ -61,7 +61,8 @@
 # Vancouver, BC V6T 1Z4
 
 
-import ConfigParser, os
+import configparser as ConfigParser
+import os
 
 userSettingPath = os.path.join(os.environ['HOME'], '.gpgpu_sim', 'aerialvision')
 
@@ -76,7 +77,7 @@ class AerialVisionConfig:
         for section in self.config.sections():
             for option in self.config.options(section):
                 value = self.config.get(section, option)
-                print "\t%s.%s = %s" % (section, option, value);
+                print ("\t%s.%s = %s" % (section, option, value))
 
     def get_value(self, section, option, default):
         if (self.config.has_option(section, option)):
@@ -90,9 +91,9 @@ avconfig = AerialVisionConfig()
 
 #Unit test / configviewer
 def main():
-    print "AerialVision Options:"
+    print ("AerialVision Options:")
     avconfig.print_all()
-    print "";
+    print ("");
 
 if __name__ == "__main__":
     main()

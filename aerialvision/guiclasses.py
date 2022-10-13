@@ -64,10 +64,10 @@
 import time
 import os
 import array
-import Tkinter as Tk
+import tkinter as Tk
 import matplotlib
 matplotlib.use('TkAgg')
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk as NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
 import matplotlib as mpl
 from matplotlib.colors import colorConverter
@@ -1046,20 +1046,20 @@ class graphManager:
             Legendname.append('Data Hazard')
             Legendname.append('Stall')
             for c in range(2, numRows):
-                Legendname.append('W' + `4*(c-2)+1` +  ':' + `4*(c-1)`)
+                Legendname.append('W' + str(4*(c-2)+1) +  ':' + str(4*(c-1)))
             BarSequence = range(0,numRows)
 
         if yAxis == 'WarpIssueSlotBreakdown':
             Legendname = []
             for c in range(0, numRows):
-                Legendname.append('W' + `c`)
+                Legendname.append('W' + str(c))
             BarSequence = range(0,numRows)
 
         dynamic_warp_resolution = 32
         if yAxis == 'WarpIssueDynamicIdBreakdown':
             Legendname = []
             for c in range(0, numRows):
-                Legendname.append('W' + `dynamic_warp_resolution*c` + ":" + `dynamic_warp_resolution*(c+1)`)
+                Legendname.append('W' + str(dynamic_warp_resolution*c) + ":" + str(dynamic_warp_resolution*(c+1)))
             BarSequence = range(0,numRows)
 
         yoff_max = numpy.array([0.0] * numCols)
@@ -1351,7 +1351,7 @@ class graphManager:
                 xlabelValues.append(x[count])
                 xlabelPos.append(xticksPos[count])
         
-        print self.yAxisStepsWilStack[self.currPlot]
+        print (self.yAxisStepsWilStack[self.currPlot])
         for count in range(0,len(y),len(y)/self.yAxisStepsWilStack[self.currPlot]):
             ylabelValues.append(yTicks[count])
             ylabelPos.append(yticksPos[count])            
@@ -1681,12 +1681,12 @@ class graphManager:
         if (self.yAxisStepsWilStack[plotToIncrease] == 1):
             self.yAxisStepsWilStack[plotToIncrease] = 2
         self.yAxisStepsWilStack[plotToIncrease] = int(float(self.yAxisStepsWilStack[plotToIncrease])*1.50)
-        print self.yAxisStepsWilStack[plotToIncrease]
+        print (self.yAxisStepsWilStack[plotToIncrease])
         self.plotDataForNewBinning(plotToIncrease)
 
     def collectDataDecreaseYBinning(self, currPlot, remove = False):
         plotToDecrease = int(currPlot[0])
-        print self.yAxisStepsWilStack[plotToDecrease]
+        print (self.yAxisStepsWilStack[plotToDecrease])
         if (remove == True):
             self.yAxisStepsWilStack[plotToDecrease] = 1
         else:

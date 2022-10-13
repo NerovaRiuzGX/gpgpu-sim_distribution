@@ -82,7 +82,7 @@ def import_user_defined_variables(variables):
     try:
         file = open(os.path.join(userSettingPath, 'variables.txt'),'r')
     except:
-        print "No variables.txt file found."
+        print ("No variables.txt file found.")
         return
 
     #this can be replaced with a proper lex-yacc parser later
@@ -104,8 +104,8 @@ def import_user_defined_variables(variables):
             # add parsed stat variable to the searchable map
             variables[statName] = statVar
             
-        except Exception, (e):
-            print "error:",e,", in variables.txt line:",line
+        except Exception as e:
+            print ("error:",e,", in variables.txt line:",line)
 
 # Parses through a given log file for data
 def parseMe(filename):
@@ -136,7 +136,7 @@ def parseMe(filename):
         t.lexer.lineno += t.value.count("\n")
         
     def t_error(t):
-        print "Illegal character '%s'" % t.value[0]
+        print ("Illegal character '%s'" % t.value[0])
         t.lexer.skip(1) 
 
     lex.lex()
@@ -223,14 +223,14 @@ def parseMe(filename):
         # detect empty data entry for particular metric and print a warning 
         if p[2] == '': 
             if not p[1] in stat_missing_warned: 
-                print "WARNING: Sample entry for metric '%s' has no data. Skipping..." % p[1]
+                print ("WARNING: Sample entry for metric '%s' has no data. Skipping..." % p[1])
                 stat_missing_warned[p[1]] = True
             return
 
         lookup_input = p[1].lower()
         if (lookup_input  in stat_lookuptable):
             if (lookup_input == "globalcyclecount") and (int(num[0]) % 10000 == 0):
-                print "Processing global cycle %s" % num[0]
+                print ("Processing global cycle %s" % num[0])
                 
             stat = stat_lookuptable[lookup_input]
             if (stat.type == 1):

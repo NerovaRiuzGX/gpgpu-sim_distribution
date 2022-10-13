@@ -99,7 +99,7 @@ def organizedata(fileVars):
     }
     data_type_char = {int:'I', float:'f'}
 
-    print "Organizing data into internal format..."
+    print ("Organizing data into internal format...")
 
     # Organize globalCycle in advance because it is used as a reference
     if ('globalCycle' in fileVars):
@@ -122,13 +122,13 @@ def organizedata(fileVars):
         ptxFile = CFLOGptxFile
         statFile = CFLOGInsnInfoFile
         
-        print "PC Histogram to CUDA Src = %d" % convertCFLog2CUDAsrc
+        print ("PC Histogram to CUDA Src = %d" % convertCFLog2CUDAsrc)
         parseCFLOGCUDA = convertCFLog2CUDAsrc
 
         if parseCFLOGCUDA == 1:
-            print "Obtaining PTX-to-CUDA Mapping from %s..." % ptxFile
+            print ("Obtaining PTX-to-CUDA Mapping from %s..." % ptxFile)
             map = lexyacctexteditor.ptxToCudaMapping(ptxFile.rstrip())
-            print "Obtaining Program Range from %s..." % statFile
+            print ("Obtaining Program Range from %s..." % statFile)
             maxStats = max(lexyacctexteditor.textEditorParseMe(statFile.rstrip()).keys())
 
         if parseCFLOGCUDA == 1:
@@ -136,7 +136,7 @@ def organizedata(fileVars):
             for lines in map:
                 for ptxLines in map[lines]:
                     newMap[ptxLines] = lines
-            print "    Total number of CUDA src lines = %s..." % len(newMap)
+            print ("    Total number of CUDA src lines = %s..." % len(newMap))
             
             markForDel = []
             for ptxLines in newMap:
@@ -144,7 +144,7 @@ def organizedata(fileVars):
                     markForDel.append(ptxLines)
             for lines in markForDel:
                 del newMap[lines]
-            print "    Number of touched CUDA src lines = %s..." % len(newMap)
+            print ("    Number of touched CUDA src lines = %s..." % len(newMap))
     
         fileVars['CFLOGglobalPTX'] = vc.variable('',2,0)
         fileVars['CFLOGglobalCUDA'] = vc.variable('',2,0)
@@ -152,7 +152,7 @@ def organizedata(fileVars):
         count = 0
         for iter in fileVars['CFLOG']:
 
-            print "Organizing data for %s" % iter
+            print ("Organizing data for %s" % iter)
 
             fileVars[iter + 'PTX'] = fileVars['CFLOG'][iter]
             fileVars[iter + 'PTX'].data = CFLOGOrganizePTX(fileVars['CFLOG'][iter].data, fileVars['CFLOG'][iter].maxPC)
@@ -174,7 +174,7 @@ def organizedata(fileVars):
                             for columns in range(0, len(fileVars[iter + 'CUDA'].data[rows])): 
                                 fileVars['CFLOGglobalCUDA'].data[rows][columns] += fileVars[iter + 'CUDA'].data[rows][columns]
             except:
-                print "Error in generating globalCFLog data"
+                print ("Error in generating globalCFLog data")
 
             count += 1
         del fileVars['CFLOG']
