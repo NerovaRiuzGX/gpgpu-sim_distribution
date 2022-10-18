@@ -107,18 +107,18 @@ def organizedata(fileVars):
         fileVars['globalCycle'].data = organizeFunction[statData.organize](statData.data, data_type_char[statData.datatype])
 
     # Organize other stat data into internal format
-    for statName, statData in fileVars.iteritems():
+    for statName, statData in fileVars.items():
         if (statName != 'CFLOG' and statName != 'globalCycle' and statData.organize != 'custom'):
             fileVars[statName].data = organizeFunction[statData.organize](statData.data, data_type_char[statData.datatype])
   
     # Custom routines to organize stat data into internal format
-    if fileVars.has_key('averagemflatency'):
+    if 'averagemflatency' in fileVars:
         zeros = []
         for count in range(len(fileVars['averagemflatency'].data),len(fileVars['globalCycle'].data)):
             zeros.append(0)
         fileVars['averagemflatency'].data = zeros + fileVars['averagemflatency'].data
 
-    if (skipCFLog == 0) and fileVars.has_key('CFLOG'):
+    if (skipCFLog == 0) and 'CFLOG' in fileVars:
         ptxFile = CFLOGptxFile
         statFile = CFLOGInsnInfoFile
         
@@ -231,10 +231,10 @@ def nullOrganizedStackedBar(nullVar, datatype_c):
         for row in range (0,len(organized)):
             newy = array.array(datatype_c, [0 for col in range(newLen)])
             for col in range(0, len(organized[row])):
-                newcol = col / n_data
+                newcol = int(col / n_data)
                 newy[newcol] += organized[row][col]
             for col in range(0, len(newy)):
-                newy[col] /= n_data 
+                newy[col] = int(newy[col] / n_data)
             organized[row] = newy
 
     return organized
@@ -320,15 +320,15 @@ def CFLOGOrganizeCuda(list, ptx2cudamap):
     nSamples = len(list[0])
 
     # create a dictionary of empty data array (one array per cuda source line)
-    for ptxline, cudaline in ptx2cudamap.iteritems():
-        if tmp.has_key(cudaline):
+    for ptxline, cudaline in ptx2cudamap.items():
+        if cudaline in tmp:
             pass
         else:
             tmp[cudaline] = [0 for lengthData in range(nSamples)]
 
 
     for cudaline in tmp:
-        for ptxLines, mapped_cudaline in ptx2cudamap.iteritems():
+        for ptxLines, mapped_cudaline in ptx2cudamap.items():
             if mapped_cudaline == cudaline:
                 for lengthData in range(nSamples):
                     tmp[cudaline][lengthData] += list[ptxLines][lengthData]
@@ -336,7 +336,7 @@ def CFLOGOrganizeCuda(list, ptx2cudamap):
     
     final = []           
     for iter in range(min(tmp.keys()),max(tmp.keys())):
-        if tmp.has_key(iter):
+        if iter in tmp:
             final.append(tmp[iter])            
         else:
             final.append([0 for lengthData in range(nSamples)])

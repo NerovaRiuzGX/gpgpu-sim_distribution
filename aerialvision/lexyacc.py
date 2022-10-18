@@ -202,7 +202,7 @@ def parseMe(filename):
 
     # generate a lookup table based on the specified name in log file for each stat
     stat_lookuptable = {}
-    for name, var in variables.iteritems():
+    for name, var in variables.items():
         if (name == 'CFLOG'):
             continue;
         if (var.lookup_tag != ''):
@@ -308,7 +308,7 @@ def parseMe(filename):
     while file:
         line = file.readline()
         if not line : break
-        nameNdata = line.split(":")
+        nameNdata = line.decode().split(":")
         if (len(nameNdata) != 2): 
             print("Syntax error at '%s'" % line) 
         namePart = nameNdata[0].strip()

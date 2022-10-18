@@ -262,7 +262,7 @@ class formEntry:
     for key in self.data[self.fileChosen].keys():
         if key not in ['globalCycle','CFLOG','EXTVARS']:#exclude hacks from list
             keysAlpha.append(key)
-    keysAlpha.sort(lambda x, y: cmp(x.lower(),y.lower()))
+    keysAlpha.sort()
     for keys in keysAlpha:
         self.cYAxisData.insert(Tk.END, keys)
             
@@ -931,7 +931,7 @@ class graphManager:
         
         
         
-        if self.simplerName.has_key('globalTotInsn') == 'False':
+        if 'globalTotInsn' not in self.simplerName:
             graphOption = 1
             
         if (graphOption == 1):  
@@ -941,7 +941,7 @@ class graphManager:
     
             yAxis = yAxis + '/Cycle'
                 
-            if (self.graphChosen == self.possGraphs[3]):
+            if (self.dataPointer.graphChosen == self.possGraphs[3]):
                 self.plotParallelIntensity(x, xAxis, [y], yAxis, yAxis, [1], plotID)
             else:
                 self.plot2VarLine(x, xAxis, y, yAxis)
@@ -972,7 +972,7 @@ class graphManager:
 
         graphOption = "NULL"
             
-        if self.simplerName.has_key('globalTotInsn') == 'False':
+        if 'globalTotInsn' not in self.simplerName :
             graphOption = 1
     
         if (graphOption == 1):
@@ -1018,7 +1018,7 @@ class graphManager:
     
         #if there are kernals.. we need to adjust the x axis for proper labelling
         #Need to make changes here.. works for now though
-        if self.simplerName.has_key('globalTotInsn'):
+        if 'globalTotInsn' in self.simplerName:
             x = self.updateVarKernal(x)
 
         concentrationFactor = len(x) // 512 + 1
@@ -1102,7 +1102,7 @@ class graphManager:
         for label in self.plot.get_yticklabels():
             label.set_fontsize(plotFormat.yticksFontSize)
      
-        self.canvas.show()
+        self.canvas.draw()
         
     def type4Variable(self, x, xAxis, y, yAxis, plotID):
         keys = y.keys()
@@ -1251,7 +1251,7 @@ class graphManager:
       self.plot.set_title(self.plotFormatInfo[self.currPlot].title)
       self.plot.set_xlabel(self.plotFormatInfo[self.currPlot].xlabel, fontsize = self.plotFormatInfo[self.currPlot].labelFontSize)
       self.plot.set_ylabel(self.plotFormatInfo[self.currPlot].ylabel, fontsize = self.plotFormatInfo[self.currPlot].labelFontSize)
-      self.canvas.show()
+      self.canvas.draw()
     
     
     def plotMultVarLine(self, x, xAxis, y, yAxis):
@@ -1261,7 +1261,7 @@ class graphManager:
       self.plotFormatInfo[self.currPlot].InitLabels(xlabel = xAxis, ylabel = yAxis, cbarlabel = '', title = '')
       self.plot.set_xlabel(self.plotFormatInfo[self.currPlot].xlabel, fontsize = self.plotFormatInfo[self.currPlot].labelFontSize)
       self.plot.set_ylabel(self.plotFormatInfo[self.currPlot].ylabel, fontsize = self.plotFormatInfo[self.currPlot].labelFontSize)
-      self.canvas.show()
+      self.canvas.draw()
 
 
     def plotScatter(self, x, xAxis, y, yAxis, plotID):
@@ -1275,7 +1275,7 @@ class graphManager:
         self.plot.set_title(plotFormat.title, fontsize = plotFormat.labelFontSize)
         self.plot.set_xlabel(plotFormat.xlabel, fontsize = plotFormat.labelFontSize)
         self.plot.set_ylabel(plotFormat.ylabel, fontsize = plotFormat.labelFontSize)
-        self.canvas.show()
+        self.canvas.draw()
       
     
     def takeDerivativeMult(self,x,y):
@@ -1347,12 +1347,12 @@ class graphManager:
         
         # put number on axis if there are more than one ticks 
         if (self.xAxisStepsWilStack[self.currPlot] != 1):
-            for count in range(0,len(x),len(x)/self.xAxisStepsWilStack[self.currPlot]):
+            for count in range(0,len(x),int(len(x)/self.xAxisStepsWilStack[self.currPlot])):
                 xlabelValues.append(x[count])
                 xlabelPos.append(xticksPos[count])
         
         print (self.yAxisStepsWilStack[self.currPlot])
-        for count in range(0,len(y),len(y)/self.yAxisStepsWilStack[self.currPlot]):
+        for count in range(0,len(y),int(len(y)/self.yAxisStepsWilStack[self.currPlot])):
             ylabelValues.append(yTicks[count])
             ylabelPos.append(yticksPos[count])            
 
@@ -1387,7 +1387,7 @@ class graphManager:
         xtickStep = x[1] - x[0]
         self.plot.set_xlim(0 / xtickStep - 0.5, self.xlim / xtickStep + 0.5)
 
-        self.canvas.show()
+        self.canvas.draw()
         
     def updateWilTicks(self, z):
         x= []
@@ -1523,7 +1523,8 @@ class graphManager:
               entry[self.currPlot] = (maxEntry, minEntry)
         
               cmap = self.plotFormatInfo[self.currPlot].cmap
-              plotCMap = apply(Tk.OptionMenu, (root[-1], cmap) + tuple(PlotFormatInfo.cmapOptions)) 
+              #plotCMap = apply(Tk.OptionMenu, (root[-1], cmap) + tuple(PlotFormatInfo.cmapOptions)) 
+              plotCMap = Tk.OptionMenu(root[-1], cmap, *PlotFormatInfo.cmapOptions) 
               plotCMap.pack(side = Tk.LEFT, padx = 5)
           
 
@@ -1612,7 +1613,7 @@ class graphManager:
         for self.currPlot in range(1,numPlots + 1):
           self.findKernalLocs()
           
-          if vars.has_key(str(self.currPlot)):
+          if str(self.currPlot) in vars:
               if vars[str(self.currPlot)].get() == 1:
                   self.dataPointer.dydx += 1
 
@@ -1751,7 +1752,7 @@ class graphManager:
           entries[self.currPlot].append(Tk.Entry(root, width = 50))
           entries[self.currPlot][-1].grid(row = currentRow, column = 4, padx = 10)
           entries[self.currPlot][-1].insert(0, self.plot.get_xlabel())
-          if self.colorbars.has_key(self.currPlot):
+          if self.currPlot in self.colorbars:
               plotLabel3 = Tk.Label(root, text = 'Colorbar: ', bg = 'white')
               plotLabel3.grid(row = currentRow, column = 5)
               entries[self.currPlot].append(Tk.Entry(root, width = 20))
@@ -1821,7 +1822,7 @@ class graphManager:
           self.plot.set_ylabel(plotFormat.ylabel, fontsize=plotFormat.labelFontSize)
           plotFormat.xlabel = entries[self.currPlot][1].get()
           self.plot.set_xlabel(plotFormat.xlabel, fontsize=plotFormat.labelFontSize)
-          if self.colorbars.has_key(self.currPlot):
+          if self.currPlot in self.colorbars:
               plotFormat.cbarlabel = entries[self.currPlot][2].get()
               self.colorbars[self.currPlot].set_label(plotFormat.cbarlabel, fontsize=plotFormat.labelFontSize)
           else:
@@ -1841,7 +1842,7 @@ class graphManager:
               ytickslabels[n].set_fontsize(plotFormat.yticksFontSize)
 
           # change colorbar ticks label fontsize
-          if self.colorbars.has_key(self.currPlot):
+          if self.currPlot in self.colorbars:
               for label in self.colorbars[self.currPlot].ax.get_yticklabels():
                   label.set_fontsize(plotFormat.cticksFontSize)
 
@@ -1851,7 +1852,7 @@ class graphManager:
         
         master.destroy()
         ## Now replot with changes.....
-        self.canvas.show()
+        self.canvas.draw()
 
     def zoomButton(self):
         #Variable initializations
@@ -1980,7 +1981,7 @@ class graphManager:
                     plot.set_xticks(xlabelPos)
 
         master.destroy()
-        self.canvas.show()
+        self.canvas.draw()
     
 
 class NaviPlotInfo:
