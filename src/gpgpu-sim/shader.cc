@@ -166,18 +166,17 @@ void shader_core_ctx::create_schedulers() {
   // must currently occur after all inputs have been initialized.
   std::string sched_config = m_config->gpgpu_scheduler_string;
   const concrete_scheduler scheduler =
-      sched_config.find("lrr") != std::string::npos
-          ? CONCRETE_SCHEDULER_LRR
-          : sched_config.find("two_level_active") != std::string::npos
-                ? CONCRETE_SCHEDULER_TWO_LEVEL_ACTIVE
-                : sched_config.find("gto") != std::string::npos
-                      ? CONCRETE_SCHEDULER_GTO
-                      : sched_config.find("old") != std::string::npos
-                            ? CONCRETE_SCHEDULER_OLDEST_FIRST
-                            : sched_config.find("warp_limiting") !=
-                                      std::string::npos
-                                  ? CONCRETE_SCHEDULER_WARP_LIMITING
-                                  : NUM_CONCRETE_SCHEDULERS;
+      sched_config.find("lrr") != std::string::npos ? CONCRETE_SCHEDULER_LRR
+      : sched_config.find("two_level_active") != std::string::npos
+          ? CONCRETE_SCHEDULER_TWO_LEVEL_ACTIVE
+      : sched_config.find("gto") != std::string::npos ? CONCRETE_SCHEDULER_GTO
+      : sched_config.find("old") != std::string::npos
+          ? CONCRETE_SCHEDULER_OLDEST_FIRST
+      : sched_config.find("warp_limiting") != std::string::npos
+          ? CONCRETE_SCHEDULER_WARP_LIMITING
+      // -nrgx : adding new scheduler
+      : sched_config.find("new") != std::string::npos ? CONCRETE_SCHEDULER_NEW
+                                                      : NUM_CONCRETE_SCHEDULERS;
   assert(scheduler != NUM_CONCRETE_SCHEDULERS);
 
   for (unsigned i = 0; i < m_config->gpgpu_num_sched_per_core; i++) {
@@ -221,6 +220,15 @@ void shader_core_ctx::create_schedulers() {
             &m_pipeline_reg[ID_OC_SFU], &m_pipeline_reg[ID_OC_INT],
             &m_pipeline_reg[ID_OC_TENSOR_CORE], m_specilized_dispatch_reg,
             &m_pipeline_reg[ID_OC_MEM], i, m_config->gpgpu_scheduler_string));
+        break;
+      // -nrgx : adding new scheduler
+      case CONCRETE_SCHEDULER_NEW:
+        schedulers.push_back(new new_scheduler(
+            m_stats, this, m_scoreboard, m_simt_stack, &m_warp,
+            &m_pipeline_reg[ID_OC_SP], &m_pipeline_reg[ID_OC_DP],
+            &m_pipeline_reg[ID_OC_SFU], &m_pipeline_reg[ID_OC_INT],
+            &m_pipeline_reg[ID_OC_TENSOR_CORE], m_specilized_dispatch_reg,
+            &m_pipeline_reg[ID_OC_MEM], i));
         break;
       default:
         abort();
@@ -1127,6 +1135,43 @@ void scheduler_unit::order_by_priority(
   }
 }
 
+
+// -nrgx : adding new order
+#include <random>
+
+template <class T>
+void scheduler_unit::order_new(
+    typename std::vector<T> &result_list,
+    const typename std::vector<T> &input_list,
+    const typename std::vector<T>::const_iterator &last_issued_from_input,
+    unsigned num_warps_to_add) {
+  assert(num_warps_to_add <= input_list.size());
+  result_list.clear();
+  typename std::vector<T> temp = input_list;
+
+  // typename std::vector<T>::const_iterator iter =
+  //     (last_issued_from_input == input_list.end()) ? input_list.begin()
+  //                                                  : last_issued_from_input + 1;
+
+  // for (unsigned count = 0; count < num_warps_to_add; ++iter, ++count) {
+  //   if (iter == input_list.end()) {
+  //     iter = input_list.begin();
+  //   }
+  //   result_list.push_back(*iter);
+  // }
+
+  std::default_random_engine randomEngine;
+  
+  std::shuffle(temp.begin(), temp.end(), randomEngine);
+
+  typename std::vector<T>::iterator it = temp.begin();
+
+  for (unsigned count = 0; count < num_warps_to_add; ++it, ++count) {
+    if (it == temp.end()) it = temp.begin();
+    result_list.push_back(*it);
+  }
+}
+
 void scheduler_unit::cycle() {
   SCHED_DPRINTF("scheduler_unit::cycle()\n");
   bool valid_inst =
@@ -1567,6 +1612,12 @@ void swl_scheduler::order_warps() {
     fprintf(stderr, "swl_scheduler m_prioritization = %d\n", m_prioritization);
     abort();
   }
+}
+
+// -nrgx : adding new scheduler
+void new_scheduler::order_warps() {
+  order_new(m_next_cycle_prioritized_warps, m_supervised_warps,
+            m_last_supervised_issued, m_supervised_warps.size());
 }
 
 void shader_core_ctx::read_operands() {}
