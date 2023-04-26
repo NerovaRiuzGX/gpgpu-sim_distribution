@@ -48,6 +48,8 @@
 #include "traffic_breakdown.h"
 #include "visualizer.h"
 
+#include <random>
+
 #define PRIORITIZE_MSHR_OVER_WB 1
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
@@ -1035,7 +1037,9 @@ void shader_core_ctx::issue_warp(register_set &pipe_reg_set,
 void shader_core_ctx::issue() {
   // Ensure fair round robin issu between schedulers
   unsigned j;
+  printf("Scheduler issue cycle\n");
   for (unsigned i = 0; i < schedulers.size(); i++) {
+    printf("WS #%d: ", i);
     j = (Issue_Prio + i) % schedulers.size();
     schedulers[j]->cycle();
   }
@@ -1137,7 +1141,7 @@ void scheduler_unit::order_by_priority(
 
 
 // -nrgx : adding new order
-#include <random>
+
 
 template <class T>
 void scheduler_unit::order_new(
@@ -1149,17 +1153,85 @@ void scheduler_unit::order_new(
   result_list.clear();
   typename std::vector<T> temp = input_list;
 
-  // typename std::vector<T>::const_iterator iter =
-  //     (last_issued_from_input == input_list.end()) ? input_list.begin()
-  //                                                  : last_issued_from_input + 1;
+  typename std::vector<T>::const_iterator iter =
+      (last_issued_from_input == input_list.end()) ? input_list.begin()
+                                                   : last_issued_from_input + 1;
 
+  // temporary flag for detecting if the warp is remembered
+  static bool flag = false;
+
+  static T obj;
+  // T is shd_warp_t*
+
+  // make this only run once
+  if (!flag) {
+    flag = true;
+    obj = (*iter);
+    //printf("The supervised warp is now allocated\n");
+  }
+
+  // This is for regular ordering
+  
   // for (unsigned count = 0; count < num_warps_to_add; ++iter, ++count) {
   //   if (iter == input_list.end()) {
   //     iter = input_list.begin();
   //   }
   //   result_list.push_back(*iter);
-  // }
 
+    // T obj = (*iter);
+    // T is shd_warp_t*
+
+    //printf("cdp_latency: %d\n", obj->m_cdp_latency);
+
+    // This is where everything goes wrong
+    //warp_inst_t tmp = *(*obj).m_ibuffer[0].m_inst;
+
+
+    //warp_inst_t tmp = (*((*iter)->m_ibuffer[0].m_inst));
+    //printf("op: %d\n", tmp.op);
+
+    // if (*iter == obj) {
+    //   //printf("ibuffer: \n");
+    //   // technically IBUFFER_SIZE is 2, but I can't use it
+    //   for (int i=0; i<2; i++) {
+    //     if(((obj->m_ibuffer)+i)->m_inst == NULL) continue;
+    //     //printf ("buffer[%d]-%d, ", i, ((obj->m_ibuffer)+i)->m_inst->cycles);
+    //   }
+    //   //printf("\n");
+    // }
+
+    // maybe I can use get_warp_id() ???
+    //for (int i=0; i<2; i++) {
+      // if((((*iter)->m_ibuffer)+i)->m_inst == NULL) continue;
+      // printf ("[%d,%d]-%d, ", count, i, (((*iter)->m_ibuffer)+i)->m_inst->m_warp_id);
+    //}
+
+    // new NULL check, and we use built-in function to fetch id
+    //if ((*iter) == NULL || (*iter)->done_exit()) continue;
+    //printf("%d,", (*iter)->get_dynamic_warp_id());
+    
+  // }
+  
+  // This doesn't work here because we cannot get pc in this scope
+  //printf("Running: %s\n", m_shader->m_config->gpgpu_ctx->func_sim->ptx_get_insn_str(pc));
+
+  // only print once instead of doing it in every cycle
+  // printf("cdp_latency: %d\n", obj->m_cdp_latency);
+
+
+  // 20230110: so what I've been thinking is a bit wrong: It's allocated through
+  //            pointers, but not actually work as pointers. the shd_warp_t* works 
+  //            more like a handler
+  // I will instead printing the address only, and see if it works
+  
+  // printf("warp address: %p\n", obj);
+  //printf("warp cont: %p\n", obj);
+
+
+
+  //===============================================
+
+  // This is for warp check
   std::default_random_engine randomEngine;
   
   std::shuffle(temp.begin(), temp.end(), randomEngine);
@@ -1170,6 +1242,8 @@ void scheduler_unit::order_new(
     if (it == temp.end()) it = temp.begin();
     result_list.push_back(*it);
   }
+
+  
 }
 
 void scheduler_unit::cycle() {
@@ -1229,6 +1303,10 @@ void scheduler_unit::cycle() {
       bool warp_inst_issued = false;
       unsigned pc, rpc;
       m_shader->get_pdom_stack_top_info(warp_id, pI, &pc, &rpc);
+
+      //-nrgx: printing pc and it's relative str representation
+      printf("%d, ", pc);
+
       SCHED_DPRINTF(
           "Warp (warp_id %u, dynamic_warp_id %u) has valid instruction (%s)\n",
           (*iter)->get_warp_id(), (*iter)->get_dynamic_warp_id(),
@@ -1464,6 +1542,9 @@ void scheduler_unit::cycle() {
     }
   }
 
+  // -nrgx: put a line feed here for better reading
+  printf("\n");
+  
   // issue stall statistics:
   if (!valid_inst)
     m_stats->shader_cycle_distro[0]++;  // idle or control hazard
@@ -1538,7 +1619,11 @@ void two_level_active_scheduler::order_warps() {
   for (std::vector<shd_warp_t *>::iterator iter =
            m_next_cycle_prioritized_warps.begin();
        iter != m_next_cycle_prioritized_warps.end();) {
+
     bool waiting = (*iter)->waiting();
+
+    // -nrgx: it was supposed to be MAX_INPUT_VALUES, which is equivalent to 24.
+    //        I'll just change it to another number and see how it works.
     for (int i = 0; i < MAX_INPUT_VALUES; i++) {
       const warp_inst_t *inst = (*iter)->ibuffer_next_inst();
       // Is the instruction waiting on a long operation?
@@ -1563,7 +1648,9 @@ void two_level_active_scheduler::order_warps() {
   // m_pending_warps
   unsigned num_promoted = 0;
   if (SCHEDULER_PRIORITIZATION_SRR == m_outer_level_prioritization) {
+
     while (m_next_cycle_prioritized_warps.size() < m_max_active_warps) {
+
       m_next_cycle_prioritized_warps.push_back(m_pending_warps.front());
       m_pending_warps.pop_front();
       SCHED_DPRINTF(
@@ -1571,12 +1658,17 @@ void two_level_active_scheduler::order_warps() {
           (m_next_cycle_prioritized_warps.back())->get_warp_id(),
           (m_next_cycle_prioritized_warps.back())->get_dynamic_warp_id());
       ++num_promoted;
+      
     }
+
   } else {
+
     fprintf(stderr, "Unimplemented m_outer_level_prioritization: %d\n",
             m_outer_level_prioritization);
     abort();
+
   }
+
   assert(num_promoted == num_demoted);
 }
 

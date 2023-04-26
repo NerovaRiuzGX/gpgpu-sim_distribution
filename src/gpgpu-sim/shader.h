@@ -239,7 +239,7 @@ class shd_warp_t {
   unsigned get_warp_id() const { return m_warp_id; }
 
   class shader_core_ctx * get_shader() { return m_shader; }
- private:
+ //private:
   static const unsigned IBUFFER_SIZE = 2;
   class shader_core_ctx *m_shader;
   unsigned m_cta_id;
@@ -252,6 +252,9 @@ class shd_warp_t {
   std::bitset<MAX_WARP_SIZE> m_active_threads;
 
   bool m_imiss_pending;
+
+// -nrgx: temporarily made this public:
+ public:
 
   struct ibuffer_entry {
     ibuffer_entry() {
@@ -266,6 +269,9 @@ class shd_warp_t {
   ibuffer_entry m_ibuffer[IBUFFER_SIZE];
   unsigned m_next;
 
+ private:
+
+ 
   unsigned m_n_atomic;  // number of outstanding atomic operations
   bool m_membar;        // if true, warp is waiting at memory barrier
 
